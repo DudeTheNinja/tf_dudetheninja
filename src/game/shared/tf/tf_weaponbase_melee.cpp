@@ -862,6 +862,11 @@ void CTFWeaponBaseMelee::DoMeleeDamage( CBaseEntity* ent, trace_t& trace, float 
 		iDmgType |= DMG_RADIUS_MAX; // Unused for melee, indicates this should be a minicrit.
 	}
 
+	if (CanHeadshot())
+	{
+		int iDmgType |= DMG_USE_HITLOCATIONS;
+	}
+
 	CTakeDamageInfo info( pPlayer, pPlayer, this, flDamage, iDmgType, iCustomDamage );
 
 	if ( fabs( flDamage ) >= 1.0f )

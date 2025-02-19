@@ -71,6 +71,17 @@ CTFWeaponBaseGun::CTFWeaponBaseGun()
 	m_iAmmoToAdd = 0;
 }
 
+int	CTFWeaponBaseGun::GetDamageType(void)
+{
+	if (CanHeadshot())
+	{
+		int iDamageType = BaseClass::GetDamageType() | DMG_USE_HITLOCATIONS;
+		return iDamageType;
+	}
+
+	return BaseClass::GetDamageType();
+}
+
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------

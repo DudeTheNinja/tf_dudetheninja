@@ -880,26 +880,26 @@ void CTFGrenadePipebombProjectile::VPhysicsCollision( int index, gamevcollisione
 			SetNextThink( gpGlobals->curtime );
 		}
 
-		if ( m_bTouched == false )
+		if (m_bTouched == false)
 		{
-			SetDamage( GetDamageScaleOnWorldContact() * GetDamage() );
+			SetDamage(GetDamageScaleOnWorldContact() * GetDamage());
 
 			int iNoBounce = 0;
-			if ( GetLauncher() )
+			if (GetLauncher())
 			{
-				CALL_ATTRIB_HOOK_INT_ON_OTHER( GetLauncher(), iNoBounce, grenade_no_bounce )
-				if ( iNoBounce )
-				{
-					Vector velocity;
-					AngularImpulse angularVelocity;
-					VPhysicsGetObject()->GetVelocity( &velocity, &angularVelocity );
-					velocity *= 0.1f;
-					VPhysicsGetObject()->SetVelocity( &velocity, &angularVelocity );
-				}
+				CALL_ATTRIB_HOOK_INT_ON_OTHER(GetLauncher(), iNoBounce, grenade_no_bounce)
+					if (iNoBounce)
+					{
+						Vector velocity;
+						AngularImpulse angularVelocity;
+						VPhysicsGetObject()->GetVelocity(&velocity, &angularVelocity);
+						velocity *= 0.1f;
+						VPhysicsGetObject()->SetVelocity(&velocity, &angularVelocity);
+					}
 			}
 
+		}
 
-		
 		m_bTouched = true;
 		return;
 	}
