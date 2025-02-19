@@ -6838,6 +6838,19 @@ const Vector& CTFWeaponBase::GetViewmodelOffset()
 	return m_vecViewmodelOffset;
 }
 
+int	CTFWeaponBase::GetDamageType(void) const
+{
+
+	if (CanHeadshot())
+	{
+		int iDamageType = g_aWeaponDamageTypes[GetWeaponID()] | DMG_USE_HITLOCATIONS;
+		return iDamageType;
+	}
+
+	return g_aWeaponDamageTypes[GetWeaponID()];
+
+}
+
 //-----------------------------------------------------------------------------
 // CTFWeaponAttachmentModel
 //-----------------------------------------------------------------------------

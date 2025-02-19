@@ -897,7 +897,8 @@ void CTFGrenadePipebombProjectile::VPhysicsCollision( int index, gamevcollisione
 					VPhysicsGetObject()->SetVelocity( &velocity, &angularVelocity );
 				}
 			}
-		}
+
+
 		
 		m_bTouched = true;
 		return;

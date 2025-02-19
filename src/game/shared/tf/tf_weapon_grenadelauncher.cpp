@@ -490,6 +490,7 @@ int CTFGrenadeLauncher::GetDetonateMode( void ) const
 //-----------------------------------------------------------------------------
 void CTFGrenadeLauncher::SecondaryAttack( void )
 {
+
 #ifdef GAME_DLL
 
 	if ( !CanAttack() )
@@ -499,6 +500,9 @@ void CTFGrenadeLauncher::SecondaryAttack( void )
 	pOwner->DoClassSpecialSkill();
 
 #endif
+
+	SendWeaponAnim(ACT_SLAM_DETONATOR_DETONATE);
+
 }
 
 bool CTFGrenadeLauncher::Reload( void )

@@ -290,12 +290,15 @@ class CTFWeaponBase : public CBaseCombatWeapon, public IHasOwner, public IHasGen
 	CTFWeaponInfo const	&GetTFWpnData() const;
 	virtual int GetWeaponID( void ) const;
 	bool IsWeapon( int iWeapon ) const;
-	virtual int	GetDamageType() const { return g_aWeaponDamageTypes[ GetWeaponID() ]; }
+	virtual int	GetDamageType( void ) const;
 	virtual int GetCustomDamageType() const { return TF_DMG_CUSTOM_NONE; }
 	virtual int	GetMaxClip1( void ) const;
 	virtual int GetDefaultClip1( void ) const;
 	virtual bool UsesPrimaryAmmo();
 	virtual float UberChargeAmmoPerShot( void ) { float fAmmo = 0; CALL_ATTRIB_HOOK_FLOAT( fAmmo, ubercharge_ammo ); return fAmmo * 0.01f; }
+
+	bool CanHeadshot(void) const { int iMode = 0; CALL_ATTRIB_HOOK_INT(iMode, can_headshot); return (iMode == 1); };
+
 
 	virtual int	Clip1() { return IsEnergyWeapon() ? Energy_GetEnergy() : m_iClip1; }
 	virtual int	Clip2() { return m_iClip2; }
