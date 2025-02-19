@@ -93,13 +93,13 @@ Debug_*/
 *.lastbuildstate
 *.recipe
 
-*_nut.h # vscript autogen file
+# *_nut.h # vscript autogen file
 
 *.vpc.sentinel
 *.vpc_crc
 *.vpc_cache
 
-*_nut.h
+# *_nut.h
 
 __vpc__/
 _vpc_/
