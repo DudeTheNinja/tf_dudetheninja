@@ -78,6 +78,12 @@ public:
 
 	virtual char const		*GetShootSound( int iIndex ) const;
 
+	bool CanKnockback(CTFWeaponBase* pWeapon, float flDamage, float flDistanceSq);
+
+	bool HasKnockback(void);
+
+	void ApplyPostHitEffects(const CTakeDamageInfo& inputInfo, CTFPlayer* pPlayer);
+
 public:	
 
 	CTFWeaponInfo	*m_pWeaponInfo;

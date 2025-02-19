@@ -907,9 +907,12 @@ float CTFSniperRifle::GetProjectileDamage( void )
 int	CTFSniperRifle::GetDamageType( void ) const
 {
 	// Only do hit location damage if we're zoomed
+
 	CTFPlayer *pPlayer = ToTFPlayer( GetPlayerOwner() );
-	if ( pPlayer && pPlayer->m_Shared.InCond( TF_COND_ZOOMED ) )
+	if ( pPlayer && pPlayer->m_Shared.InCond( TF_COND_ZOOMED ) || CanHeadshot())
 		return BaseClass::GetDamageType();
+
+
 
 	int nDamageType = BaseClass::GetDamageType() & ~DMG_USE_HITLOCATIONS;
 

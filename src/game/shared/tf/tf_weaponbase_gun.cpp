@@ -13,6 +13,8 @@
 #include "tf_weapon_jar.h"
 #include "tf_weapon_flaregun.h"
 #include "tf_projectile_energy_ring.h"
+#include "tf_gamerules.h"
+
 
 #if !defined( CLIENT_DLL )	// Server specific.
 
@@ -48,6 +50,9 @@ END_NETWORK_TABLE()
 BEGIN_PREDICTION_DATA( CTFWeaponBaseGun )
 END_PREDICTION_DATA()
 
+extern float AirBurstDamageForce(const Vector& size, float damage, float scale);
+
+
 // Server specific.
 #if !defined( CLIENT_DLL ) 
 BEGIN_DATADESC( CTFWeaponBaseGun )
@@ -71,16 +76,7 @@ CTFWeaponBaseGun::CTFWeaponBaseGun()
 	m_iAmmoToAdd = 0;
 }
 
-int	CTFWeaponBaseGun::GetDamageType(void)
-{
-	if (CanHeadshot())
-	{
-		int iDamageType = BaseClass::GetDamageType() | DMG_USE_HITLOCATIONS;
-		return iDamageType;
-	}
 
-	return BaseClass::GetDamageType();
-}
 
 //-----------------------------------------------------------------------------
 // Purpose:
@@ -377,8 +373,57 @@ CBaseEntity *CTFWeaponBaseGun::FireProjectile( CTFPlayer *pPlayer )
 		pPlayer->RemoveInvisibility();
 	}
 #endif // GAME_DLL
-
+	ApplyKnockback(pPlayer);
 	return pProjectile;
+}
+
+void CTFWeaponBaseGun::ApplyKnockback(CTFPlayer* pPlayer) {
+#ifndef CLIENT_DLL
+	if (HasKnockback())
+	{
+		// Perform some knock back.
+		CTFPlayer* pOwner = ToTFPlayer(GetPlayerOwner());
+		if (!pOwner)
+			return;
+
+		// No knockback during pre-round freeze.
+		if (TFGameRules() && (TFGameRules()->State_Get() == GR_STATE_PREROUND))
+			return;
+
+		// Knock the firer back!
+		if (!(pOwner->GetFlags() & FL_ONGROUND) && !pPlayer->m_bScattergunJump)
+		{
+			pPlayer->m_bScattergunJump = true;
+
+			pOwner->m_Shared.StunPlayer(0.3f, 1.f, TF_STUN_MOVEMENT | TF_STUN_MOVEMENT_FORWARD_ONLY);
+
+			float flForce = AirBurstDamageForce(pOwner->WorldAlignSize(), 60, 6.f);
+
+			Vector vecForward;
+			AngleVectors(pOwner->EyeAngles(), &vecForward);
+			Vector vecForce = vecForward * -flForce;
+
+			EntityMatrix mtxPlayer;
+			mtxPlayer.InitFromEntity(pOwner);
+			Vector vecAbsVelocity = pOwner->GetAbsVelocity();
+			Vector vecAbsVelocityAsPoint = vecAbsVelocity + pOwner->GetAbsOrigin();
+			Vector vecLocalVelocity = mtxPlayer.WorldToLocal(vecAbsVelocityAsPoint);
+
+			vecLocalVelocity.x = -300;
+
+			vecAbsVelocityAsPoint = mtxPlayer.LocalToWorld(vecLocalVelocity);
+			vecAbsVelocity = vecAbsVelocityAsPoint - pOwner->GetAbsOrigin();
+			pOwner->SetAbsVelocity(vecAbsVelocity);
+
+			// Impulse an additional bit of Z push.
+			pOwner->ApplyAbsVelocityImpulse(Vector(0, 0, 50.f));
+
+			// Slow player movement for a brief period of time.
+			pOwner->RemoveFlag(FL_ONGROUND);
+		}
+	}
+#endif
+
 }
 
 //-----------------------------------------------------------------------------
@@ -1123,4 +1168,76 @@ bool CTFWeaponBaseGun::HasLastShotCritical( void )
 		}
 	}
 	return false;
+}
+
+#define JUMP_SPEED	268.3281572999747f
+#define RECOIL_KNOCKBACK_MIN_DMG		30.0f
+#define RECOIL_KNOCKBACK_MIN_RANGE_SQ	160000.0f //400x400
+
+bool CTFWeaponBaseGun::CanKnockback(CTFWeaponBase* pWeapon, float flDamage, float flDistanceSq)
+{
+	int nBulletKnockBack = 0;
+	CALL_ATTRIB_HOOK_INT_ON_OTHER(pWeapon, nBulletKnockBack, weapon_knockback_recoil);
+	if (nBulletKnockBack != 0)
+	{
+		if (flDamage > RECOIL_KNOCKBACK_MIN_DMG && flDistanceSq < RECOIL_KNOCKBACK_MIN_RANGE_SQ)
+			return true;
+		float flKnockbackMult = 1.0f;
+		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER(pWeapon, flKnockbackMult, weapon_recoil_mult);
+		if (flKnockbackMult > 1.0f)
+			return true;
+	}
+	return false;
+}
+
+
+bool CTFWeaponBaseGun::HasKnockback(void)
+{
+	int iSGKnockback = 0;
+	CALL_ATTRIB_HOOK_INT(iSGKnockback, weapon_knockback_recoil);
+	if (iSGKnockback)
+		return true;
+	return false;
+}
+
+void CTFWeaponBaseGun::ApplyPostHitEffects(const CTakeDamageInfo& inputInfo, CTFPlayer* pPlayer)
+{
+#ifndef CLIENT_DLL
+	if (!HasKnockback())
+		return;
+
+	CTFPlayer* pAttacker = ToTFPlayer(inputInfo.GetAttacker());
+	if (!pAttacker)
+		return;
+
+	CTFPlayer* pTarget = pPlayer;
+	if (!pTarget)
+		return;
+
+	if (pTarget->m_Shared.GetWeaponKnockbackID() > -1)
+		return;
+
+	if (pTarget->m_Shared.IsImmuneToPushback())
+		return;
+
+	float flDam = inputInfo.GetDamage();
+	Vector vecDir = pAttacker->WorldSpaceCenter() - pTarget->WorldSpaceCenter();
+	if (!CanKnockback(this, flDam, vecDir.LengthSqr()))
+		return;
+
+	VectorNormalize(vecDir);
+
+	float flKnockbackMult = 3.0f;
+	CALL_ATTRIB_HOOK_FLOAT_ON_OTHER(this, flKnockbackMult, weapon_recoil_mult);
+
+	float flForce = AirBurstDamageForce(pTarget->WorldAlignSize(), flDam, flKnockbackMult);
+	Vector vecForce = vecDir * -flForce;
+	vecForce.z += JUMP_SPEED;
+
+	pTarget->ApplyGenericPushbackImpulse(vecForce, pAttacker);
+
+	pTarget->m_Shared.StunPlayer(0.3f, 1.f, TF_STUN_MOVEMENT | TF_STUN_MOVEMENT_FORWARD_ONLY, pAttacker);
+	pTarget->m_Shared.SetWeaponKnockbackID(pAttacker->GetUserID());
+
+#endif
 }

@@ -45,6 +45,9 @@ public:
 	DECLARE_DATADESC();
 #endif
 
+	int GetDamageType(void) const;
+
+
 	CTFPistol() {}
 	~CTFPistol() {}
 

@@ -48,6 +48,8 @@ public:
 
 	CTFShotgun();
 
+	int GetDamageType(void) const;
+
 	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_SHOTGUN_PRIMARY; }
 	virtual void	PrimaryAttack();
 	virtual void	PlayWeaponShootSound( void );
@@ -113,7 +115,8 @@ public:
 	virtual void	FireBullet( CTFPlayer *pPlayer );
 	virtual void	ApplyPostHitEffects( const CTakeDamageInfo &inputInfo, CTFPlayer *pPlayer );
 	virtual void	FinishReload( void );
-	virtual bool	HasKnockback( void );
+	bool IsFAN(void);
+	//virtual bool	HasKnockback( void );
 	virtual bool	SendWeaponAnim( int iActivity );
 
 #ifdef GAME_DLL

@@ -66,6 +66,16 @@ END_PREDICTION_DATA()
 LINK_ENTITY_TO_CLASS( tf_weapon_handgun_scout_primary, CTFPistol_ScoutPrimary );
 PRECACHE_WEAPON_REGISTER( tf_weapon_handgun_scout_primary );
 
+int CTFPistol::GetDamageType(void) const
+{
+	if (CanHeadshot())
+	{
+		int iDamageType = BaseClass::GetDamageType() | DMG_USE_HITLOCATIONS;
+		return iDamageType;
+	}
+
+	return BaseClass::GetDamageType();
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: 

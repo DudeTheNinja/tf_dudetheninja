@@ -111,6 +111,17 @@ CTFMinigun::~CTFMinigun()
 	WeaponReset();
 }
 
+int CTFMinigun::GetDamageType(void) const
+{
+	if (CanHeadshot())
+	{
+		int iDamageType = BaseClass::GetDamageType() | DMG_USE_HITLOCATIONS;
+		return iDamageType;
+	}
+
+	return BaseClass::GetDamageType();
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------

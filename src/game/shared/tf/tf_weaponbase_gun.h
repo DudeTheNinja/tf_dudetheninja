@@ -64,10 +64,9 @@ public:
 
 	virtual int GetWeaponProjectileType( void ) const { return m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_iProjectile; }
 	virtual CBaseEntity *FireProjectile( CTFPlayer *pPlayer );
+	void ApplyKnockback(CTFPlayer* pPlayer);
 	virtual void RemoveProjectileAmmo( CTFPlayer *pPlayer );
 	virtual void ModifyProjectile( CBaseEntity* pProj ) {};
-
-	virtual int		GetDamageType(void);
 
 	virtual void FireBullet( CTFPlayer *pPlayer );
 	CBaseEntity *FireRocket( CTFPlayer *pPlayer, int iRocketType=0 );
@@ -80,6 +79,10 @@ public:
 	virtual CBaseEntity *FireEnergyBall( CTFPlayer *pPlayer, bool bRing=false );
 
 	virtual bool HasLastShotCritical( void );
+
+	bool CanKnockback(CTFWeaponBase* pWeapon, float flDamage, float flDistanceSq);
+	bool HasKnockback(void);
+	void ApplyPostHitEffects(const CTakeDamageInfo& inputInfo, CTFPlayer* pPlayer);
 
 	virtual float GetWeaponSpread( void );
 	virtual void  GetCustomProjectileModel( CAttribute_String *attrCustomProjModel );

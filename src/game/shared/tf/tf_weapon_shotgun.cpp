@@ -68,6 +68,18 @@ CTFShotgun::CTFShotgun()
 	m_bReloadsSingly = true;
 }
 
+int CTFShotgun::GetDamageType(void) const
+{
+	if (CanHeadshot())
+	{
+		int iDamageType = BaseClass::GetDamageType() | DMG_USE_HITLOCATIONS;
+		return iDamageType;
+	}
+
+	return BaseClass::GetDamageType();
+}
+
+
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
@@ -432,7 +444,7 @@ void CTFScatterGun::FinishReload( void )
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-bool CTFScatterGun::HasKnockback( void )
+bool CTFScatterGun::IsFAN( void ) // Prevents my new knockback function causing custom scatters to have FAN anims
 {
 	int iWeaponMod = 0;
 	CALL_ATTRIB_HOOK_INT( iWeaponMod, set_scattergun_has_knockback );
@@ -451,7 +463,7 @@ bool CTFScatterGun::SendWeaponAnim( int iActivity )
 	if ( !pPlayer )
 		return BaseClass::SendWeaponAnim( iActivity );
 
-	if ( HasKnockback() )
+	if ( IsFAN() )
 	{
 		// Knockback version uses a different model and animation set.
 		switch ( iActivity )

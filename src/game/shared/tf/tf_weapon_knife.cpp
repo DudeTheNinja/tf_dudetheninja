@@ -403,6 +403,8 @@ bool CTFKnife::CanPerformBackstabAgainstTarget( CTFPlayer *pTarget )
 
 	// Immune?
 	int iNoBackstab = 0;
+	int iCantBackstab = 0;
+	CALL_ATTRIB_HOOK_INT(iCantBackstab, no_backstabs);
 	CALL_ATTRIB_HOOK_INT_ON_OTHER( pTarget, iNoBackstab, cannot_be_backstabbed );
 	if ( iNoBackstab )
 		return false;
