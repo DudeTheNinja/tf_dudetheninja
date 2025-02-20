@@ -27,6 +27,10 @@ ConVar tf_weapon_criticals_melee( "tf_weapon_criticals_melee", "1", FCVAR_REPLIC
 
 extern float AirBurstDamageForce(const Vector& size, float damage, float scale);
 
+#define JUMP_SPEED	268.3281572999747f
+#define RECOIL_KNOCKBACK_MIN_DMG		30.0f
+#define RECOIL_KNOCKBACK_MIN_RANGE_SQ	160000.0f //400x400
+
 
 //=============================================================================
 //
@@ -763,6 +767,9 @@ void CTFWeaponBaseMelee::Smack( void )
 			{
 				DoMeleeDamage( GetTFPlayerOwner(), trace, 0.5f );
 			}
+
+			ApplyKnockback(GetTFPlayerOwner());
+
 		}
 	}
 
@@ -790,6 +797,7 @@ void CTFWeaponBaseMelee::Smack( void )
 
 	lagcompensation->FinishLagCompensation( pPlayer );
 #endif
+
 }
 
 float CTFWeaponBaseMelee::GetSmackTime( int iWeaponMode )
@@ -1207,10 +1215,6 @@ char const *CTFWeaponBaseMelee::GetShootSound( int iIndex ) const
 	return BaseClass::GetShootSound(iIndex);
 }
 
-#define JUMP_SPEED	268.3281572999747f
-#define RECOIL_KNOCKBACK_MIN_DMG		30.0f
-#define RECOIL_KNOCKBACK_MIN_RANGE_SQ	160000.0f //400x400
-
 bool CTFWeaponBaseMelee::CanKnockback(CTFWeaponBase* pWeapon, float flDamage, float flDistanceSq)
 {
 	int nBulletKnockBack = 0;
@@ -1239,6 +1243,7 @@ bool CTFWeaponBaseMelee::HasKnockback(void)
 
 void CTFWeaponBaseMelee::ApplyPostHitEffects(const CTakeDamageInfo& inputInfo, CTFPlayer* pPlayer)
 {
+	/*
 #ifndef CLIENT_DLL
 	if (!HasKnockback())
 		return;
@@ -1277,4 +1282,57 @@ void CTFWeaponBaseMelee::ApplyPostHitEffects(const CTakeDamageInfo& inputInfo, C
 	pTarget->m_Shared.SetWeaponKnockbackID(pAttacker->GetUserID());
 
 #endif
+*/
+}
+
+void CTFWeaponBaseMelee::ApplyKnockback(CTFPlayer* pPlayer) {
+#ifndef CLIENT_DLL
+	if (HasKnockback())
+	{
+		// Perform some knock back.
+		CTFPlayer* pOwner = ToTFPlayer(GetPlayerOwner());
+		if (!pOwner)
+			return;
+
+		// No knockback during pre-round freeze.
+		//if (TFGameRules() && (TFGameRules()->State_Get() == GR_STATE_PREROUND))
+		//	return;
+
+		// Knock the firer back!
+		//if (!(pOwner->GetFlags() & FL_ONGROUND) && !pPlayer->m_bScattergunJump)
+		//{
+			pPlayer->m_bScattergunJump = true;
+
+			pOwner->m_Shared.StunPlayer(0.3f, 1.f, TF_STUN_MOVEMENT | TF_STUN_MOVEMENT_FORWARD_ONLY);
+
+			float flForce = AirBurstDamageForce(pOwner->WorldAlignSize(), 60, 6.f);
+
+			Vector vecForward;
+			AngleVectors(pOwner->EyeAngles(), &vecForward);
+			Vector vecForce = vecForward * -flForce;
+
+			EntityMatrix mtxPlayer;
+			mtxPlayer.InitFromEntity(pOwner);
+			Vector vecAbsVelocity = pOwner->GetAbsVelocity();
+			Vector vecAbsVelocityAsPoint = vecAbsVelocity + pOwner->GetAbsOrigin();
+			Vector vecLocalVelocity = mtxPlayer.WorldToLocal(vecAbsVelocityAsPoint);
+
+			float flKnockbackMult = 1.0f;
+			CALL_ATTRIB_HOOK_FLOAT_ON_OTHER(this, flKnockbackMult, weapon_recoil_mult);
+
+			vecLocalVelocity.x = -300 * flKnockbackMult;
+
+			vecAbsVelocityAsPoint = mtxPlayer.LocalToWorld(vecLocalVelocity);
+			vecAbsVelocity = vecAbsVelocityAsPoint - pOwner->GetAbsOrigin();
+			pOwner->SetAbsVelocity(vecAbsVelocity);
+
+			// Impulse an additional bit of Z push.
+			pOwner->ApplyAbsVelocityImpulse(Vector(0, 0, 50.f));
+
+			// Slow player movement for a brief period of time.
+			pOwner->RemoveFlag(FL_ONGROUND);
+		//}
+	}
+#endif
+
 }

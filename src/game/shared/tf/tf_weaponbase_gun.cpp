@@ -52,6 +52,10 @@ END_PREDICTION_DATA()
 
 extern float AirBurstDamageForce(const Vector& size, float damage, float scale);
 
+#define JUMP_SPEED	268.3281572999747f
+#define RECOIL_KNOCKBACK_MIN_DMG		30.0f
+#define RECOIL_KNOCKBACK_MIN_RANGE_SQ	160000.0f //400x400
+
 
 // Server specific.
 #if !defined( CLIENT_DLL ) 
@@ -391,10 +395,6 @@ void CTFWeaponBaseGun::ApplyKnockback(CTFPlayer* pPlayer) {
 			return;
 
 		// Knock the firer back!
-		if (!(pOwner->GetFlags() & FL_ONGROUND) && !pPlayer->m_bScattergunJump)
-		{
-			pPlayer->m_bScattergunJump = true;
-
 			pOwner->m_Shared.StunPlayer(0.3f, 1.f, TF_STUN_MOVEMENT | TF_STUN_MOVEMENT_FORWARD_ONLY);
 
 			float flForce = AirBurstDamageForce(pOwner->WorldAlignSize(), 60, 6.f);
@@ -420,7 +420,7 @@ void CTFWeaponBaseGun::ApplyKnockback(CTFPlayer* pPlayer) {
 
 			// Slow player movement for a brief period of time.
 			pOwner->RemoveFlag(FL_ONGROUND);
-		}
+		
 	}
 #endif
 
@@ -1170,15 +1170,14 @@ bool CTFWeaponBaseGun::HasLastShotCritical( void )
 	return false;
 }
 
-#define JUMP_SPEED	268.3281572999747f
-#define RECOIL_KNOCKBACK_MIN_DMG		30.0f
-#define RECOIL_KNOCKBACK_MIN_RANGE_SQ	160000.0f //400x400
 
 bool CTFWeaponBaseGun::CanKnockback(CTFWeaponBase* pWeapon, float flDamage, float flDistanceSq)
 {
 	int nBulletKnockBack = 0;
+	int iSGKB2 = 0;
 	CALL_ATTRIB_HOOK_INT_ON_OTHER(pWeapon, nBulletKnockBack, weapon_knockback_recoil);
-	if (nBulletKnockBack != 0)
+	CALL_ATTRIB_HOOK_INT(iSGKB2, set_scattergun_has_knockback);
+	if (nBulletKnockBack != 0 || iSGKB2 != 0)
 	{
 		if (flDamage > RECOIL_KNOCKBACK_MIN_DMG && flDistanceSq < RECOIL_KNOCKBACK_MIN_RANGE_SQ)
 			return true;
@@ -1186,6 +1185,10 @@ bool CTFWeaponBaseGun::CanKnockback(CTFWeaponBase* pWeapon, float flDamage, floa
 		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER(pWeapon, flKnockbackMult, weapon_recoil_mult);
 		if (flKnockbackMult > 1.0f)
 			return true;
+		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER(pWeapon, flKnockbackMult, scattergun_knockback_mult);
+		if (flKnockbackMult > 1.0f)
+			return true;
+
 	}
 	return false;
 }
@@ -1194,8 +1197,10 @@ bool CTFWeaponBaseGun::CanKnockback(CTFWeaponBase* pWeapon, float flDamage, floa
 bool CTFWeaponBaseGun::HasKnockback(void)
 {
 	int iSGKnockback = 0;
+	int iSGKB2 = 0;
 	CALL_ATTRIB_HOOK_INT(iSGKnockback, weapon_knockback_recoil);
-	if (iSGKnockback)
+	CALL_ATTRIB_HOOK_INT(iSGKB2, set_scattergun_has_knockback);
+	if (iSGKnockback || iSGKB2)
 		return true;
 	return false;
 }
@@ -1220,6 +1225,14 @@ void CTFWeaponBaseGun::ApplyPostHitEffects(const CTakeDamageInfo& inputInfo, CTF
 	if (pTarget->m_Shared.IsImmuneToPushback())
 		return;
 
+	// Knock the firer back!
+	int iSGKB2 = 0;
+	CALL_ATTRIB_HOOK_INT(iSGKB2, set_scattergun_has_knockback);
+	if (TFGameRules() && (TFGameRules()->State_Get() == GR_STATE_PREROUND))
+		return;
+	if (iSGKB2 && ((pAttacker->GetFlags() & FL_ONGROUND) || pAttacker->m_bScattergunJump))
+			return;
+
 	float flDam = inputInfo.GetDamage();
 	Vector vecDir = pAttacker->WorldSpaceCenter() - pTarget->WorldSpaceCenter();
 	if (!CanKnockback(this, flDam, vecDir.LengthSqr()))
@@ -1229,6 +1242,8 @@ void CTFWeaponBaseGun::ApplyPostHitEffects(const CTakeDamageInfo& inputInfo, CTF
 
 	float flKnockbackMult = 3.0f;
 	CALL_ATTRIB_HOOK_FLOAT_ON_OTHER(this, flKnockbackMult, weapon_recoil_mult);
+	if (flKnockbackMult == 0.0f)
+		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER(this, flKnockbackMult, scattergun_knockback_mult);
 
 	float flForce = AirBurstDamageForce(pTarget->WorldAlignSize(), flDam, flKnockbackMult);
 	Vector vecForce = vecDir * -flForce;

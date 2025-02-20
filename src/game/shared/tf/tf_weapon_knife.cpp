@@ -406,7 +406,7 @@ bool CTFKnife::CanPerformBackstabAgainstTarget( CTFPlayer *pTarget )
 	int iCantBackstab = 0;
 	CALL_ATTRIB_HOOK_INT(iCantBackstab, no_backstabs);
 	CALL_ATTRIB_HOOK_INT_ON_OTHER( pTarget, iNoBackstab, cannot_be_backstabbed );
-	if ( iNoBackstab )
+	if ( iNoBackstab || iCantBackstab)
 		return false;
 
 	// Can't backstab if attached to someone with grapple or if the victim is flying fast by grapple

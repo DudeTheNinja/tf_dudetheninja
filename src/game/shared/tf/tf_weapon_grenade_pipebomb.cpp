@@ -727,6 +727,8 @@ void CTFGrenadePipebombProjectile::PipebombTouch( CBaseEntity *pOther )
 	if ( !pOther->IsSolid() || pOther->IsSolidFlagSet( FSOLID_VOLUME_CONTENTS ) )
 		return;
 
+
+
 	// Handle hitting skybox (disappear).
 	trace_t pTrace;
 	Vector velDir = GetAbsVelocity();
@@ -749,9 +751,13 @@ void CTFGrenadePipebombProjectile::PipebombTouch( CBaseEntity *pOther )
 		return;
 	}
 
+
+
 	//If we already touched a surface then we're not exploding on contact anymore.
 	if ( m_bTouched == true )
 		return;
+
+
 
 	bool bExploded = false;
 
@@ -863,6 +869,16 @@ void CTFGrenadePipebombProjectile::VPhysicsCollision( int index, gamevcollisione
 		return;
 	}
 
+	CTFGrenadeLauncher* pLauncher = dynamic_cast<CTFGrenadeLauncher*>(GetLauncher());
+	if (pLauncher) {
+		int iImpulseBlast = 0;
+		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER(pLauncher, iImpulseBlast, impulse_blast);
+		if (iImpulseBlast) {
+			SetThink(&CTFGrenadePipebombProjectile::Detonate);
+			SetNextThink(gpGlobals->curtime);
+		}
+	}
+
 	if ( m_iType == TF_GL_MODE_REGULAR || m_iType == TF_GL_MODE_CANNONBALL )
 	{
 		if ( PropDynamic_CollidesWithGrenades( pHitEntity) )
@@ -944,6 +960,8 @@ void CTFGrenadePipebombProjectile::VPhysicsCollision( int index, gamevcollisione
 		{
 			SetDetonateTimerLength( flFizzle );
 		}
+
+
 	}
 }
 

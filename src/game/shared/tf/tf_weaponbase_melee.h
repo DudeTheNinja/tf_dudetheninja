@@ -84,6 +84,8 @@ public:
 
 	void ApplyPostHitEffects(const CTakeDamageInfo& inputInfo, CTFPlayer* pPlayer);
 
+	void ApplyKnockback(CTFPlayer* pPlayer);
+
 public:	
 
 	CTFWeaponInfo	*m_pWeaponInfo;
