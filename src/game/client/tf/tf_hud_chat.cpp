@@ -332,6 +332,17 @@ Color CHudChat::GetClientColor( int clientIndex )
 			}
 		}
 
+		CSteamID userid = GetSteamIDForPlayerIndex(clientIndex);
+		std::string userid_str = std::to_string(userid.ConvertToUint64());
+		std::string bigboss = "76561198118954275"; // this is me!
+		auto const s_test_val = userid_str.c_str();
+
+		//Msg(s_test_val); //logs to console
+
+		if (userid_str == bigboss) {
+			return g_ColorBigBoss;
+		}
+
 		switch ( iTeam )
 		{
 		case TF_TEAM_RED	: return pScheme->GetColor( "TFColors.ChatTextRed", g_ColorRed );

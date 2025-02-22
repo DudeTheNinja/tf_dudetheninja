@@ -317,6 +317,12 @@ void JarExplode( int iEntIndex, CTFPlayer *pAttacker, CBaseEntity *pOriginalWeap
 
 	// Treat this trace exactly like radius damage
 	CTraceFilterIgnorePlayers traceFilter( pAttacker, COLLISION_GROUP_PROJECTILE );
+	int newCondID = 0;
+	CALL_ATTRIB_HOOK_INT_ON_OTHER( pOriginalWeapon, newCondID, custom_jar_addcond );
+	
+	if (newCondID > 0) {
+		cond = TFCondIndexToEnum(newCondID);
+	}
 
 	// Splash pee on everyone nearby.
 	CBaseEntity *pListOfEntities[MAX_PLAYERS_ARRAY_SAFE];
