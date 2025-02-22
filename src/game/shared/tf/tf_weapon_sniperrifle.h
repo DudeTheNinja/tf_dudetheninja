@@ -108,6 +108,8 @@ public:
 	virtual bool CanHolster( void ) const;
 	virtual bool Holster( CBaseCombatWeapon *pSwitchingTo );
 
+	virtual bool CanHeadshot(void) const;
+
 	virtual void HandleZooms( void );
 	virtual void ItemPostFrame( void );
 	virtual bool Lower( void );

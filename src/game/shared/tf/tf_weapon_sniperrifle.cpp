@@ -372,7 +372,9 @@ void CTFSniperRifle::ItemPostFrame( void )
 	else if ( m_flNextSecondaryAttack <= gpGlobals->curtime )
 	{
 		// Don't start charging in the time just after a shot before we unzoom to play rack anim.
-		if ( pPlayer->m_Shared.InCond( TF_COND_AIMING ) && !m_bRezoomAfterShot )
+		int bBlockCharge = 0;
+		CALL_ATTRIB_HOOK_INT(bBlockCharge, mod_sniper_cannot_charge);
+		if ( pPlayer->m_Shared.InCond( TF_COND_AIMING ) && !m_bRezoomAfterShot && bBlockCharge == 0)
 		{
 			float fSniperRifleChargePerSec = m_flChargePerSec;
 			ApplyChargeSpeedModifications( fSniperRifleChargePerSec );
@@ -909,14 +911,27 @@ int	CTFSniperRifle::GetDamageType( void ) const
 	// Only do hit location damage if we're zoomed
 
 	CTFPlayer *pPlayer = ToTFPlayer( GetPlayerOwner() );
-	if ( pPlayer && pPlayer->m_Shared.InCond( TF_COND_ZOOMED ) || CanHeadshot())
+	if ( pPlayer && pPlayer->m_Shared.InCond( TF_COND_ZOOMED ))
 		return BaseClass::GetDamageType();
 
+	if (CanHeadshot())
+	{
+		return BaseClass::GetDamageType() | DMG_USE_HITLOCATIONS;
+	}
 
 
 	int nDamageType = BaseClass::GetDamageType() & ~DMG_USE_HITLOCATIONS;
 
 	return nDamageType;
+}
+
+bool CTFSniperRifle::CanHeadshot(void) const
+{
+	int iMode = 0; 
+	CALL_ATTRIB_HOOK_INT(iMode, can_headshot); 
+	if (iMode == 1)
+		return true;
+	return false;
 }
 
 //-----------------------------------------------------------------------------

@@ -263,6 +263,17 @@ const char *GetRandomBotName( void )
 		"We... are DudeTheNinjanom!",
 		"unbindall",
 		"Tabbert",
+		"Cuthbert",
+		"cludge",
+		"Photographed Coconut",
+		"My Name Is Edwin",
+		"TOO BAD, WALUIGI TIME",
+		"John Tutorial",
+		"SoldierTF2Bot1927",
+		"Just Here For The Paycheck",
+		"Evil Bot From Hell",
+		"I'm using tilt controls!",
+		"This name intentionally left blank",
 
 		NULL
 	};
@@ -277,8 +288,8 @@ const char *GetRandomBotName( void )
 		nameIndex = RandomInt( 0, nameCount-1 );
 	}
 
-	const char *name = nameList[ nameIndex++ ];
-	//const char *name = nameList[ RandomInt(0, nameCount - 1) ];
+	//const char *name = nameList[ nameIndex++ ];
+	const char *name = nameList[ RandomInt(0, nameCount - 1) ];
 
 	if ( nameIndex >= nameCount )
 		nameIndex = 0;
