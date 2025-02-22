@@ -908,19 +908,24 @@ float CTFSniperRifle::GetProjectileDamage( void )
 //-----------------------------------------------------------------------------
 int	CTFSniperRifle::GetDamageType( void ) const
 {
+
+	
+
 	// Only do hit location damage if we're zoomed
 
 	CTFPlayer *pPlayer = ToTFPlayer( GetPlayerOwner() );
 	if ( pPlayer && pPlayer->m_Shared.InCond( TF_COND_ZOOMED ))
 		return BaseClass::GetDamageType();
 
+	
+	int nDamageType;
+
 	if (CanHeadshot())
 	{
-		return BaseClass::GetDamageType() | DMG_USE_HITLOCATIONS;
-	}
-
-
-	int nDamageType = BaseClass::GetDamageType() & ~DMG_USE_HITLOCATIONS;
+		//Msg("We're headshotting!!\n");
+		nDamageType = BaseClass::GetDamageType();
+	} else
+	nDamageType = BaseClass::GetDamageType() & ~DMG_USE_HITLOCATIONS;
 
 	return nDamageType;
 }
@@ -930,6 +935,7 @@ bool CTFSniperRifle::CanHeadshot(void) const
 	int iMode = 0; 
 	CALL_ATTRIB_HOOK_INT(iMode, can_headshot); 
 	if (iMode == 1)
+		//Msg("Yeah this can headshot\n");
 		return true;
 	return false;
 }
@@ -1023,7 +1029,7 @@ bool CTFSniperRifle::CanFireCriticalShot( bool bIsHeadshot, CBaseEntity *pTarget
 {
 	m_bCurrentAttackIsCrit = false;
 	m_bCurrentShotIsHeadshot = false;
-
+	
 	if ( !BaseClass::CanFireCriticalShot( bIsHeadshot, pTarget ) )
 		return false;
 
@@ -1050,6 +1056,12 @@ bool CTFSniperRifle::CanFireCriticalShot( bool bIsHeadshot, CBaseEntity *pTarget
 	{
 		if ( !IsFullyCharged() )
 			return false;
+	}
+
+	if (CanHeadshot()) {
+		return true;
+		m_bCurrentAttackIsCrit = true;
+		m_bCurrentShotIsHeadshot = bIsHeadshot;
 	}
 
 	int iCanCritNoScope = 0;
