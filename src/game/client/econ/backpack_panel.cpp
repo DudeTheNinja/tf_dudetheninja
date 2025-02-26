@@ -1098,53 +1098,64 @@ void CBackpackPanel::AssignItemToPanel( CItemModelPanel *pPanel, int iIndex )
 
 	CEconItemView *pItemData = NULL;
 	CEconItemView tempItem;
-	if ( m_bShowBaseItems )
+	if (m_bShowBaseItems)
 	{
 		const CEconItemDefinition* pItemDef = NULL;
+		const CEconItemSchema::CustomItemDefinitionMap_t& CustommapItems = GetItemSchema()->GetCustomItemDefinitionMap();
+		const CEconItemSchema::BaseItemDefinitionMap_t& BasemapItems = GetItemSchema()->GetBaseItemDefinitionMap();
 
-		const CEconItemSchema::BaseItemDefinitionMap_t& mapItems = GetItemSchema()->GetBaseItemDefinitionMap();
-		int iStart = iIndex == 0 ? mapItems.FirstInorder() : mapItems.NextInorder( iLastMapItem );
-		for ( int it = iStart; it != mapItems.InvalidIndex(); it = mapItems.NextInorder( it ) )
+		// Create a combined map of both custom and base items
+		// Use the same less func type that the original maps use
+		CUtlMap<int, CEconItemDefinition*> combinedMap(DefLessFunc(int));
+
+		// Copy items from CustommapItems to combinedMap
+		for (int it = CustommapItems.FirstInorder(); it != CustommapItems.InvalidIndex(); it = CustommapItems.NextInorder(it))
+		{
+			combinedMap.Insert(CustommapItems.Key(it), CustommapItems[it]);
+		}
+
+		// Copy items from BasemapItems to combinedMap
+		for (int it = BasemapItems.FirstInorder(); it != BasemapItems.InvalidIndex(); it = BasemapItems.NextInorder(it))
+		{
+			// Only add if not already in map (in case of duplicate keys)
+			if (combinedMap.Find(BasemapItems.Key(it)) == combinedMap.InvalidIndex())
+			{
+				combinedMap.Insert(BasemapItems.Key(it), BasemapItems[it]);
+			}
+		}
+
+		// Now use the combined map for your logic
+		int iStart = iIndex == 0 ? combinedMap.FirstInorder() : combinedMap.NextInorder(iLastMapItem);
+		for (int it = iStart; it != combinedMap.InvalidIndex(); it = combinedMap.NextInorder(it))
 		{
 			iLastMapItem = it;
-
-			if ( mapItems[it]->IsBaseItem() && !mapItems[it]->IsHidden() )
+			if (!combinedMap[it]->IsHidden() && (combinedMap[it]->IsCustomItem() || combinedMap[it]->IsBaseItem()))
 			{
-				// Instead of linking to this base item definition, link to the definition of what it will become
-				// when we customize it.
-				CFmtStr fmtStrCustomizedDefName( "Upgradeable %s", mapItems[it]->GetDefinitionName() );
-				pItemDef = GetItemSchema()->GetItemDefinitionByName( fmtStrCustomizedDefName.Access() );
-				
-				// If we don't have an upgradeable version, we assume that we can't upgrade it and link to the base
-				// definition instead. We expect this to only happen if the item won't actually be useable for whatever
-				// purpose (name tags, etc.). We sanity-check this on the GC.
-				if ( !pItemDef )
+				// The rest of your existing logic remains the same
+				CFmtStr fmtStrCustomizedDefName("Upgradeable %s", combinedMap[it]->GetDefinitionName());
+				pItemDef = GetItemSchema()->GetItemDefinitionByName(fmtStrCustomizedDefName.Access());
+
+				if (!pItemDef)
 				{
-					pItemDef = mapItems[it];
+					pItemDef = combinedMap[it];
 				}
+				tempItem.Init(pItemDef->GetDefinitionIndex(), AE_UNIQUE, AE_USE_SCRIPT_VALUE, true);
 
-				tempItem.Init( pItemDef->GetDefinitionIndex(), AE_UNIQUE, AE_USE_SCRIPT_VALUE, true );
-
-				// skip this item if the tool cannot be applied to it
-				if ( bInToolSelection && !CEconSharedToolSupport::ToolCanApplyTo( &m_ToolSelectionItem, &tempItem ) )
+				if (bInToolSelection && !CEconSharedToolSupport::ToolCanApplyTo(&m_ToolSelectionItem, &tempItem))
 				{
 					pItemDef = NULL;
 					continue;
 				}
-
-				if ( DoesItemPassSearchFilter( tempItem.GetDescription(), wszFilter ) )
+				if (DoesItemPassSearchFilter(tempItem.GetDescription(), wszFilter))
 				{
 					break;
 				}
 			}
-
 			pItemDef = NULL;
 		}
-
-		if ( pItemDef )
+		if (pItemDef)
 		{
 			pItemData = &tempItem;
-
 			++iItemBackpackPos;
 		}
 	}
@@ -1882,7 +1893,9 @@ void CBackpackPanel::AddCommerceToContextMenu( Menu *pMenu, const char* pszActio
 //-----------------------------------------------------------------------------
 void CBackpackPanel::OpenContextMenu()
 {
-	return;
+	// I presume it just goes "return" so you can't modify items. Not that you could anyway.
+	// Commenting this out SHOULD allow me to view stuff like the inspect panel, right?
+	// return;								
 
 	CUtlVector<CEconItemView*> vecSelectedItems; 
 	for ( int i = 0; i < m_pItemModelPanels.Count(); i++ )
@@ -3470,6 +3483,37 @@ void CBackpackPanel::DoApplyOnItem()
 					OnCommand( "showbaseitems" );
 				}
 			}
+
+			if (!bHasValidTargetItem)
+			{
+				// this is really inefficient, maybe have a list of baseitems somewhere
+				CEconItemView tempItem;
+				const CEconItemDefinition* pItemDef = NULL;				
+				const CEconItemSchema::SortedItemDefinitionMap_t& mapItems = GetItemSchema()->GetCustomItemDefinitionMap();
+				for (int it = mapItems.FirstInorder(); it != mapItems.InvalidIndex(); it = mapItems.NextInorder(it))
+				{
+					if (mapItems[it]->IsBaseItem() || mapItems[it]->IsCustomItem() && !mapItems[it]->IsHidden())
+					{
+						CFmtStr fmtStrCustomizedDefName("Upgradeable %s", mapItems[it]->GetDefinitionName());
+						pItemDef = GetItemSchema()->GetItemDefinitionByName(fmtStrCustomizedDefName.Access());
+						if (pItemDef)
+						{
+							tempItem.Init(pItemDef->GetDefinitionIndex(), AE_UNIQUE, AE_USE_SCRIPT_VALUE, true);
+							if (CEconSharedToolSupport::ToolCanApplyTo(&m_ToolSelectionItem, &tempItem))
+							{
+								bHasValidTargetItem = true;
+								break;
+							}
+						}
+					}
+				}				
+				if (bHasValidTargetItem)
+				{
+					// automatically switch to stock items
+					OnCommand("showbaseitems");
+				}
+			}
+
 		}
 
 		if ( !bHasValidTargetItem )

@@ -5343,14 +5343,15 @@ bool CEconItemSchema::BInitItems( KeyValues *pKVItems, CUtlVector<CUtlString> *p
 					}
 				}
 
+				if (pItemDef->IsCustomItem())
+				{
+					m_mapCustomItems.Insert(nItemIndex, pItemDef);
+				}
 				if ( pItemDef->IsBaseItem() )
 				{
 					m_mapBaseItems.Insert( nItemIndex, pItemDef );
 				}
-				if ( pItemDef->IsCustomItem() )
-				{
-					m_mapCustomItems.Insert( nItemIndex, pItemDef );
-				}
+				
 
 				// Cache off bundles for the link phase below.
 				if ( pItemDef->IsBundle() )
