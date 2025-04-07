@@ -142,6 +142,7 @@ const char *DifficultyLevelToString( CTFBot::DifficultyType skill )
 //-----------------------------------------------------------------------------------------------------
 const char *GetRandomBotName( void )
 {
+	// TODO: read from a text file, have this list exist as a fallback if no bot names are given
 	static const char *nameList[] =
 	{
 		"NOT DudeTheNinja",
@@ -274,7 +275,9 @@ const char *GetRandomBotName( void )
 		"Evil Bot From Hell",
 		"I'm using tilt controls!",
 		"This name intentionally left blank",
-
+		"FLINT",
+		"STEEL",
+		"Chicken Jockey",
 		NULL
 	};
 	static int nameCount = 0;
