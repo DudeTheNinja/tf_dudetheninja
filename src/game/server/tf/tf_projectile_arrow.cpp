@@ -77,6 +77,17 @@ END_NETWORK_TABLE()
 BEGIN_DATADESC( CTFProjectile_HealingBolt )
 END_DATADESC()
 
+LINK_ENTITY_TO_CLASS(dtn_projectile_physicsbullet, CTFProjectile_PhysBullet );
+PRECACHE_WEAPON_REGISTER(dtn_projectile_physicsbullet);
+
+IMPLEMENT_NETWORKCLASS_ALIASED( TFProjectile_PhysBullet, DT_TFProjectile_PhysBullet)
+
+BEGIN_NETWORK_TABLE(CTFProjectile_PhysBullet, DT_TFProjectile_PhysBullet)
+END_NETWORK_TABLE()
+
+BEGIN_DATADESC(CTFProjectile_PhysBullet)
+END_DATADESC()
+
 //-----------------------------------------------------------------------------
 LINK_ENTITY_TO_CLASS( tf_projectile_grapplinghook, CTFProjectile_GrapplingHook );
 PRECACHE_WEAPON_REGISTER( tf_projectile_grapplinghook );
@@ -124,6 +135,8 @@ static const char* GetArrowEntityName( ProjectileType_t projectileType )
 		return "tf_projectile_healing_bolt";
 	case TF_PROJECTILE_GRAPPLINGHOOK:
 		return "tf_projectile_grapplinghook";
+	case DTN_PROJECTILE_PHYS_BULLET:
+		return "dtn_projectile_physicsbullet";
 	
 	default:
 		return "tf_projectile_arrow";
@@ -224,7 +237,11 @@ void CTFProjectile_Arrow::Spawn()
 	{
 		SetModel( g_pszArrowModels[MODEL_GRAPPLINGHOOK] );
 	}
-	else
+	else if (m_iProjectileType == DTN_PROJECTILE_PHYS_BULLET)
+	{
+		SetModel(g_pszArrowModels[MODEL_DTN_PHYSBULLET]);
+		m_iWeaponId = TF_WEAPON_SNIPERRIFLE_PROJECTILE;
+	}
 	{
 		SetModel( g_pszArrowModels[MODEL_ARROW_REGULAR] );
 	}
@@ -252,6 +269,7 @@ void CTFProjectile_Arrow::Precache()
 	int claw_model = PrecacheModel( g_pszArrowModels[MODEL_ARROW_BUILDING_REPAIR] );
 	int festive_arrow_model = PrecacheModel( g_pszArrowModels[MODEL_FESTIVE_ARROW_REGULAR] );
 	PrecacheModel( g_pszArrowModels[MODEL_FESTIVE_HEALING_BOLT] );
+	int physbullet_model = PrecacheModel( g_pszArrowModels[MODEL_DTN_PHYSBULLET] );
 
 	PrecacheGibsForModel( arrow_model );
 	PrecacheGibsForModel( claw_model );
@@ -261,6 +279,7 @@ void CTFProjectile_Arrow::Precache()
 	PrecacheModel( "effects/arrowtrail_blu.vmt" );
 	PrecacheModel( "effects/healingtrail_red.vmt" );
 	PrecacheModel( "effects/healingtrail_blu.vmt" );
+	PrecacheModel( "effects/physbullet_trail.vmt" );
 	PrecacheModel( CLAW_TRAIL_RED );
 	PrecacheModel( CLAW_TRAIL_BLU );
 	PrecacheParticleSystem( CLAW_REPAIR_EFFECT_BLU );
@@ -271,6 +290,12 @@ void CTFProjectile_Arrow::Precache()
 	PrecacheScriptSound( "Weapon_Arrow.ImpactConcrete" );
 	PrecacheScriptSound( "Weapon_Arrow.Nearmiss" );
 	PrecacheScriptSound( "Weapon_Arrow.ImpactFleshCrossbowHeal" );
+	PrecacheScriptSound( "Metal_Box.BulletImpact" );
+	PrecacheScriptSound( "Default.BulletImpact" );
+	PrecacheScriptSound( "Wood.BulletImpact" );
+	PrecacheScriptSound( "Concrete.BulletImpact" );
+	PrecacheScriptSound( "Bullets.DefaultNearmiss" );
+	PrecacheScriptSound( "TFPlayer.Pain" );
 
 	BaseClass::Precache();
 }
@@ -512,27 +537,32 @@ bool CTFProjectile_Arrow::StrikeTarget( mstudiobbox_t *pBox, CBaseEntity *pOther
 			}
 #endif
 			// Damage
-			if ( bApplyEffect )
+			if (bApplyEffect)
 			{
 				// Apply Milk First so we can get health from this
-				if ( m_bApplyMilkOnHit && pOther->IsPlayer() )
+				if (m_bApplyMilkOnHit && pOther->IsPlayer())
 				{
-					CTFPlayer *pVictim = ToTFPlayer( pOther );
-					if ( pVictim && pVictim->m_Shared.CanBeDebuffed() && pVictim->CanGetWet() )
+					CTFPlayer* pVictim = ToTFPlayer(pOther);
+					if (pVictim && pVictim->m_Shared.CanBeDebuffed() && pVictim->CanGetWet())
 					{
 						// duration is based on damage
-						float flDuration = RemapValClamped( GetDamage(), 25.0f, 75.0f, 6.0f, 10.0f );
-						pVictim->m_Shared.AddCond( TF_COND_MAD_MILK, flDuration, pAttacker );
-						pVictim->m_Shared.SetPeeAttacker( ToTFPlayer( pAttacker ) );
-						pVictim->SpeakConceptIfAllowed( MP_CONCEPT_JARATE_HIT );
+						float flDuration = RemapValClamped(GetDamage(), 25.0f, 75.0f, 6.0f, 10.0f);
+						pVictim->m_Shared.AddCond(TF_COND_MAD_MILK, flDuration, pAttacker);
+						pVictim->m_Shared.SetPeeAttacker(ToTFPlayer(pAttacker));
+						pVictim->SpeakConceptIfAllowed(MP_CONCEPT_JARATE_HIT);
 					}
 				}
 
-				CTakeDamageInfo info( this, pAttacker, m_hLauncher, vecVelocity, vecOrigin, GetDamage(), nDamageType, nDamageCustom );
-				pOther->TakeDamage( info );
+				CTakeDamageInfo info(this, pAttacker, m_hLauncher, vecVelocity, vecOrigin, GetDamage(), nDamageType, nDamageCustom);
+				pOther->TakeDamage(info);
 
 				// Play an impact sound.
-				ImpactSound( "Weapon_Arrow.ImpactFlesh", true );
+				if (m_iProjectileType == DTN_PROJECTILE_PHYS_BULLET) {
+					ImpactSound("TFPlayer.Pain", true);
+				}
+				else
+					ImpactSound("Weapon_Arrow.ImpactFlesh", true);
+				}
 			}
 		}
 		else if ( pOther->IsPlayer() ) // Hit a team-mate.
@@ -543,7 +573,7 @@ bool CTFProjectile_Arrow::StrikeTarget( mstudiobbox_t *pBox, CBaseEntity *pOther
 				ImpactTeamPlayer( dynamic_cast<CTFPlayer*>( pOther ) );
 			}
 		}
-	}
+	
 
 	if ( !m_bPenetrate && !bBreakArrow )
 	{
@@ -907,24 +937,48 @@ void CTFProjectile_Arrow::CheckSkyboxImpact( CBaseEntity *pOther )
 		// Play an impact sound.
 		const char* pszSoundName = "Weapon_Arrow.ImpactMetal";
 		surfacedata_t *psurf = physprops->GetSurfaceData( tr.surface.surfaceProps );
-		if ( psurf )
-		{
-			switch ( psurf->game.material )
+		if (!(m_iProjectileType == DTN_PROJECTILE_PHYS_BULLET)) {
+			if (psurf)
 			{
-			case CHAR_TEX_GRATE:
-			case CHAR_TEX_METAL:
-				pszSoundName = "Weapon_Arrow.ImpactMetal";
-				break;
+				switch (psurf->game.material)
+				{
+				case CHAR_TEX_GRATE:
+				case CHAR_TEX_METAL:
+					pszSoundName = "Weapon_Arrow.ImpactMetal";
+					break;
 
-			case CHAR_TEX_CONCRETE:
-				pszSoundName = "Weapon_Arrow.ImpactConcrete";
-				break;
+				case CHAR_TEX_CONCRETE:
+					pszSoundName = "Weapon_Arrow.ImpactConcrete";
+					break;
 
-			case CHAR_TEX_WOOD:
-				pszSoundName = "Weapon_Arrow.ImpactWood";
-				break;
+				case CHAR_TEX_WOOD:
+					pszSoundName = "Weapon_Arrow.ImpactWood";
+					break;
+				}
 			}
 		}
+		else {
+			pszSoundName = "Default.BulletImpact";
+			if (psurf)
+			{
+				switch (psurf->game.material)
+				{
+				case CHAR_TEX_GRATE:
+				case CHAR_TEX_METAL:
+					pszSoundName = "Metal_Box.BulletImpact";
+					break;
+
+				case CHAR_TEX_CONCRETE:
+					pszSoundName = "Concrete.BulletImpact";
+					break;
+
+				case CHAR_TEX_WOOD:
+					pszSoundName = "Wood.BulletImpact";
+					break;
+				}
+			}
+		}
+
 		ImpactSound( pszSoundName );
 	}
 }
@@ -981,7 +1035,7 @@ bool CTFProjectile_Arrow::CheckRagdollPinned( const Vector &start, const Vector 
 	// Pin to the wall.
 	trace_t tr;
 	UTIL_TraceLine( start, start + vel * 125, MASK_BLOCKLOS, NULL, COLLISION_GROUP_NONE, &tr );
-	if ( tr.fraction != 1.0f && tr.DidHitWorld() )
+	if ( tr.fraction != 1.0f && tr.DidHitWorld() && !(m_iProjectileType == DTN_PROJECTILE_PHYS_BULLET))
 	{
 		CEffectData	data;
 
@@ -1037,9 +1091,13 @@ const char *CTFProjectile_Arrow::GetTrailParticleName( void )
 	{	
 		return ( GetTeamNumber() == TF_TEAM_RED ) ? CLAW_TRAIL_RED : CLAW_TRAIL_BLU;
 	}
-	else if ( m_iProjectileType == TF_PROJECTILE_HEALING_BOLT || m_iProjectileType == TF_PROJECTILE_FESTIVE_HEALING_BOLT )
+	else if (m_iProjectileType == TF_PROJECTILE_HEALING_BOLT || m_iProjectileType == TF_PROJECTILE_FESTIVE_HEALING_BOLT)
 	{
-		return ( GetTeamNumber() == TF_TEAM_RED ) ? "effects/healingtrail_red.vmt" : "effects/healingtrail_blu.vmt";
+		return (GetTeamNumber() == TF_TEAM_RED) ? "effects/healingtrail_red.vmt" : "effects/healingtrail_blu.vmt";
+	}
+	else if (m_iProjectileType == DTN_PROJECTILE_PHYS_BULLET)
+	{
+		return "effects/physbullet_trail.vmt";
 	}
 
 	return ( GetTeamNumber() == TF_TEAM_RED ) ? "effects/arrowtrail_red.vmt" : "effects/arrowtrail_blu.vmt";
@@ -1056,6 +1114,7 @@ void CTFProjectile_Arrow::CreateTrail( void )
 	if ( !m_pTrail )
 	{
 		int width = 3;
+		float flLifeTime = 0.3f;
 		switch ( m_iProjectileType )
 		{
 			case TF_PROJECTILE_BUILDING_REPAIR_BOLT:
@@ -1064,7 +1123,12 @@ void CTFProjectile_Arrow::CreateTrail( void )
 			case TF_PROJECTILE_HEALING_BOLT:
 			case TF_PROJECTILE_FESTIVE_HEALING_BOLT:
 			case TF_PROJECTILE_GRAPPLINGHOOK:
-				return; // do not create arrow trail for healing bolt, use particle instead (client only)
+				return; // do not create arrow trail for healing bolt, use particle instead (client only
+				break;
+			case DTN_PROJECTILE_PHYS_BULLET:
+				//return; // gonna make the bullet have a particle attached to it and also have it glow for visibility
+				width = 5;
+				flLifeTime = 0.025f;
 		}
 		
 		const char *pTrailTeamName = GetTrailParticleName();
@@ -1075,7 +1139,8 @@ void CTFProjectile_Arrow::CreateTrail( void )
 		pTempTrail->SetTransparency( kRenderTransAlpha, 255, 255, 255, 255, kRenderFxNone );
 		pTempTrail->SetStartWidth( width );
 		pTempTrail->SetTextureResolution( 1.0f / ( 96.0f * 1.0f ) );
-		pTempTrail->SetLifeTime( 0.3 );
+		if (m_iProjectileType == DTN_PROJECTILE_PHYS_BULLET) pTempTrail->SetEndWidth(0);
+		pTempTrail->SetLifeTime( flLifeTime );
 		pTempTrail->TurnOn();
 		pTempTrail->SetAttachment( this, 0 );
 		m_pTrail = pTempTrail;
@@ -1491,4 +1556,20 @@ void CTFProjectile_GrapplingHook::StopImpactFleshSoundLoop()
 		controller.SoundDestroy( m_pImpactFleshSoundLoop );
 		m_pImpactFleshSoundLoop = NULL;
 	}
+}
+
+bool CTFProjectile_PhysBullet::CanHeadshot() {
+	CTFPlayer* pPlayer = ToTFPlayer(GetOwnerEntity());
+	if (pPlayer == NULL)
+		return false;
+	CTFWeaponBase* pWeapon = pPlayer->GetActiveTFWeapon();
+
+	if (pWeapon)
+	{
+		int iCanHeadshot = 0;
+		CALL_ATTRIB_HOOK_INT_ON_OTHER(pWeapon, iCanHeadshot, can_headshot);
+		if (iCanHeadshot)
+			return true;
+	}
+	return false;
 }

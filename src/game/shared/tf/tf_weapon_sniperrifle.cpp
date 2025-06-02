@@ -126,6 +126,17 @@ LINK_ENTITY_TO_CLASS( tf_weapon_sniperrifle_classic, CTFSniperRifleClassic );
 PRECACHE_WEAPON_REGISTER( tf_weapon_sniperrifle_classic );
 //=============================================================================
 
+IMPLEMENT_NETWORKCLASS_ALIASED( TFSniperRifleProj, DT_TFSniperRifleProj )
+
+BEGIN_NETWORK_TABLE( CTFSniperRifleProj, DT_TFSniperRifleProj )
+END_NETWORK_TABLE()
+
+BEGIN_PREDICTION_DATA( CTFSniperRifleProj )
+END_PREDICTION_DATA()
+
+LINK_ENTITY_TO_CLASS(tf_weapon_sniperrifle_projectile, CTFSniperRifleProj);
+PRECACHE_WEAPON_REGISTER(tf_weapon_sniperrifle_projectile);
+
 
 //=============================================================================
 //
@@ -149,6 +160,18 @@ CTFSniperRifle::CTFSniperRifle()
 	m_flChargePerSec = TF_WEAPON_SNIPERRIFLE_CHARGE_PER_SEC;
 
 	m_bWasAimedAtEnemy = false;
+}
+//-----
+// Purpose: Handles jump-scoping with an attribute
+//-----
+
+bool CTFSniperRifle::CanJumpScope(void)
+{
+	int bJumpShot = 0;
+	CALL_ATTRIB_HOOK_INT(bJumpShot, scope_when_jumping);
+	if (bJumpShot) {
+		return true;
+	} return false;
 }
 
 //-----------------------------------------------------------------------------
@@ -323,6 +346,7 @@ void CTFSniperRifle::HandleZooms( void )
 	}
 }
 
+
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
@@ -357,7 +381,8 @@ void CTFSniperRifle::ItemPostFrame( void )
 #endif
 
 	// Start charging when we're zoomed in, and allowed to fire
-	if ( pPlayer->m_Shared.IsJumping() )
+
+	if ( pPlayer->m_Shared.IsJumping() && !CanJumpScope())
 	{
 		// Unzoom if we're jumping
 		if ( IsZoomed() )
@@ -482,7 +507,7 @@ void CTFSniperRifle::Zoom( void )
 {
 	// Don't allow the player to zoom in while jumping
 	CTFPlayer *pPlayer = GetTFPlayerOwner();
-	if ( pPlayer && pPlayer->m_Shared.IsJumping() )
+	if ( pPlayer && pPlayer->m_Shared.IsJumping() && !CanJumpScope())
 	{
 		if ( pPlayer->GetFOV() >= 75 )
 			return;
@@ -2104,3 +2129,21 @@ void CTFSniperRifleClassic::Detach( void )
 	BaseClass::Detach();
 }
 
+
+
+float CTFSniperRifleProj::GetProjectileSpeed(void)
+{
+	return RemapValClamped(0.75f, 0.0f, 1.f, 1800, 2600); // Temp, if we want to ramp.
+}
+
+//-----------------------------------------------------------------------------
+float CTFSniperRifleProj::GetProjectileGravity(void)
+{
+	return RemapValClamped(0.75f, 0.0f, 1.f, 0.5f, 0.1f); // Temp, if we want to ramp.
+}
+
+//-----------------------------------------------------------------------------
+bool CTFSniperRifleProj::IsViewModelFlipped(void)
+{
+	return !(BaseClass::IsViewModelFlipped()); // Invert because arrows are backwards by default.
+}

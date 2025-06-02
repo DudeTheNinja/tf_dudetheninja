@@ -23,10 +23,16 @@ BEGIN_NETWORK_TABLE( C_TFProjectile_Arrow, DT_TFProjectile_Arrow )
 END_NETWORK_TABLE()
 
 //-----------------------------------------------------------------------------
-IMPLEMENT_NETWORKCLASS_ALIASED( TFProjectile_HealingBolt, DT_TFProjectile_HealingBolt )
+IMPLEMENT_NETWORKCLASS_ALIASED(TFProjectile_HealingBolt, DT_TFProjectile_HealingBolt)
 
-BEGIN_NETWORK_TABLE( C_TFProjectile_HealingBolt, DT_TFProjectile_HealingBolt )
+BEGIN_NETWORK_TABLE(C_TFProjectile_HealingBolt, DT_TFProjectile_HealingBolt)
 END_NETWORK_TABLE()
+
+IMPLEMENT_NETWORKCLASS_ALIASED(TFProjectile_PhysBullet, DT_TFProjectile_PhysBullet)
+
+BEGIN_NETWORK_TABLE(C_TFProjectile_PhysBullet, DT_TFProjectile_PhysBullet)
+END_NETWORK_TABLE()
+
 
 IMPLEMENT_NETWORKCLASS_ALIASED( TFProjectile_GrapplingHook, DT_TFProjectile_GrapplingHook )
 
@@ -152,7 +158,26 @@ void C_TFProjectile_Arrow::CheckNearMiss( void )
 		return;
 	}
 
-	if ( UTIL_BPerformNearMiss( this, "Weapon_Arrow.Nearmiss", NEAR_MISS_THRESHOLD ) )
+	if (UTIL_BPerformNearMiss(this, "Weapon_Arrow.Nearmiss", NEAR_MISS_THRESHOLD) )
+	{
+		SetNextClientThink( CLIENT_THINK_NEVER );
+		m_bNearMiss = true;
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void C_TFProjectile_PhysBullet::CheckNearMiss( void )
+{
+	// If we are attached to something or stationary we don't want to do near miss checks.
+	if ( m_pAttachedTo || (GetMoveType() == MOVETYPE_NONE) )
+	{
+		m_bNearMiss = true;
+		return;
+	}
+
+	if (UTIL_BPerformNearMiss(this, "Bullets.DefaultNearmiss", NEAR_MISS_THRESHOLD) )
 	{
 		SetNextClientThink( CLIENT_THINK_NEVER );
 		m_bNearMiss = true;
@@ -191,23 +216,24 @@ void C_TFProjectile_Arrow::CreateCritTrail( void )
 }
 
 //-----------------------------------------------------------------------------
-void C_TFProjectile_HealingBolt::OnDataChanged( DataUpdateType_t updateType )
+void C_TFProjectile_HealingBolt::OnDataChanged(DataUpdateType_t updateType)
 {
-	if ( updateType == DATA_UPDATE_CREATED )
+	if (updateType == DATA_UPDATE_CREATED)
 	{
-		switch( GetTeamNumber() )
+		switch (GetTeamNumber())
 		{
 		case TF_TEAM_BLUE:
-			ParticleProp()->Create( "healshot_trail_blue", PATTACH_ABSORIGIN_FOLLOW );
+			ParticleProp()->Create("healshot_trail_blue", PATTACH_ABSORIGIN_FOLLOW);
 			break;
 		case TF_TEAM_RED:
-			ParticleProp()->Create( "healshot_trail_red", PATTACH_ABSORIGIN_FOLLOW );
+			ParticleProp()->Create("healshot_trail_red", PATTACH_ABSORIGIN_FOLLOW);
 			break;
 		}
 	}
 
-	BaseClass::OnDataChanged( updateType );
+	BaseClass::OnDataChanged(updateType);
 }
+
 
 
 void C_TFProjectile_GrapplingHook::OnDataChanged( DataUpdateType_t updateType )

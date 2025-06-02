@@ -81,6 +81,11 @@ void CreateCrossbowBoltTF( const Vector &vecOrigin, const Vector &vecDirection, 
 		flDirOffset = 0.0f;
 		flLifeTime = 0.1f;
 		break;
+	case DTN_PROJECTILE_PHYS_BULLET:
+		pszModelName = g_pszArrowModels[MODEL_DTN_PHYSBULLET];
+		flDirOffset = 0.0f;
+		//flLifeTime = 0.1f;
+		break;
 	default:
 		// Unsupported Model
 		Assert( 0 );

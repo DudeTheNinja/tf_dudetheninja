@@ -169,6 +169,12 @@ void CHudBowChargeMeter::FireGameEvent( IGameEvent *event )
 				}
 				break;
 			}
+		case DTN_PROJECTILE_PHYS_BULLET:
+		{
+			pszModelName = g_pszArrowModels[MODEL_DTN_PHYSBULLET];
+			flScale = 0.f;
+			break;
+		}
 		default:
 			Warning( " Unsupported Projectile type on event arrow_impact - %d", type );
 			return;

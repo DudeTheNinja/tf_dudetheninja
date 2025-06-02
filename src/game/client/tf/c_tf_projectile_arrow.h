@@ -58,12 +58,27 @@ private:
 //-----------------------------------------------------------------------------
 class C_TFProjectile_HealingBolt : public C_TFProjectile_Arrow
 {
-	DECLARE_CLASS( C_TFProjectile_HealingBolt, C_TFProjectile_Arrow );
+	DECLARE_CLASS(C_TFProjectile_HealingBolt, C_TFProjectile_Arrow);
 
-	virtual void	OnDataChanged( DataUpdateType_t updateType );
+	virtual void	OnDataChanged(DataUpdateType_t updateType);
 
 public:
 
+	DECLARE_NETWORKCLASS();
+};
+
+class C_TFProjectile_PhysBullet : public C_TFProjectile_Arrow
+{
+	DECLARE_CLASS(C_TFProjectile_PhysBullet, C_TFProjectile_Arrow);
+
+
+	private:
+	bool			m_bNearMiss;
+
+	//virtual void	OnDataChanged(DataUpdateType_t updateType);
+
+public:
+	void			CheckNearMiss(void);
 	DECLARE_NETWORKCLASS();
 };
 

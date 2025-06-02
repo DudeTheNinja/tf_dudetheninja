@@ -12575,9 +12575,22 @@ const char *CTFGameRules::GetKillingWeaponName( const CTakeDamageInfo &info, CTF
 			}
 		}
 	}
-	else if ( 0 == Q_strcmp( killer_weapon_name, "tf_projectile_balloffire" ) )
+	else if (0 == Q_strcmp(killer_weapon_name, "tf_projectile_balloffire"))
 	{
 		killer_weapon_name = "dragons_fury";
+	}
+	else if (0 == Q_strcmp(killer_weapon_name, "dtn_projectile_physicsbullet"))
+	{
+		CTFWeaponBase* pWeapon = dynamic_cast<CTFWeaponBase*>(info.GetWeapon());
+		if (pWeapon)
+		{
+			CEconItemView* pItem = pWeapon->GetAttributeContainer()->GetItem();
+			if (pItem && pItem->GetStaticData() && pItem->GetStaticData()->GetIconClassname())
+			{
+				killer_weapon_name = pItem->GetStaticData()->GetIconClassname();
+				*iWeaponID = TF_WEAPON_NONE;
+			}
+		}
 	}
 	else if ( 0 == Q_strcmp( killer_weapon_name, "obj_attachment_sapper" ) )
 	{
@@ -21717,7 +21730,7 @@ bool CTFGameRules::CanUpgradeWithAttrib( CTFPlayer *pPlayer, int iWeaponSlot, at
 				if ( !( pPlayer->IsPlayerClass( TF_CLASS_HEAVYWEAPONS ) && iWeaponSlot == TF_WPN_TYPE_PRIMARY ) )
 				{
 					int iProjectile = pWeaponGun->GetWeaponProjectileType();
-					return ( iProjectile == TF_PROJECTILE_ARROW || iProjectile == TF_PROJECTILE_BULLET || iProjectile == TF_PROJECTILE_HEALING_BOLT || iProjectile == TF_PROJECTILE_FESTIVE_ARROW || iProjectile == TF_PROJECTILE_FESTIVE_HEALING_BOLT );
+					return ( iProjectile == TF_PROJECTILE_ARROW || iProjectile == TF_PROJECTILE_BULLET || iProjectile == TF_PROJECTILE_HEALING_BOLT || iProjectile == TF_PROJECTILE_FESTIVE_ARROW || iProjectile == TF_PROJECTILE_FESTIVE_HEALING_BOLT || iProjectile == DTN_PROJECTILE_PHYS_BULLET );
 				}
 			}
 

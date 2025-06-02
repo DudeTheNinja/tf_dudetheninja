@@ -17,6 +17,7 @@
 #define CTFSniperRifleDecap C_TFSniperRifleDecap
 #define CTFSniperRifleClassic C_TFSniperRifleClassic
 #define CTFSniperRifleRevolver C_TFSniperRifleRevolver
+#define CTFSniperRifleProj C_TFSniperRifleProj
 #define CSniperDot C_SniperDot
 #endif
 
@@ -26,6 +27,7 @@ enum RifleTypes_t
 	RIFLE_JARATE,
 	RIFLE_MACHINA,
 	RIFLE_CLASSIC,
+	RIFLE_PROJ
 };
 
 //=============================================================================
@@ -131,7 +133,7 @@ public:
 
 	virtual bool ShouldEjectBrass();
 #endif
-
+	bool CanJumpScope(void);
 	bool IsZoomed( void );
 	bool IsFullyCharged( void ) const;			// have we been zoomed in long enough for our shot to do max damage
 
@@ -274,5 +276,18 @@ private:
 #endif
 };
 
+class CTFSniperRifleProj : public CTFSniperRifle {
+
+	DECLARE_CLASS(CTFSniperRifleProj, CTFSniperRifle);
+	DECLARE_NETWORKCLASS();
+	DECLARE_PREDICTABLE();
+
+
+	virtual int		GetWeaponID(void) const { return TF_WEAPON_SNIPERRIFLE_PROJECTILE; }
+	virtual float	GetProjectileSpeed(void);
+	virtual float   GetProjectileGravity(void);
+	virtual bool	IsViewModelFlipped(void);
+
+};
 
 #endif // TF_WEAPON_SNIPERRIFLE_H
