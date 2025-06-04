@@ -862,6 +862,18 @@ void CTFGrenadePipebombProjectile::VPhysicsCollision( int index, gamevcollisione
 	if ( !pHitEntity )
 		return;
 
+	CTFGrenadeLauncher* pLauncher = dynamic_cast<CTFGrenadeLauncher*>(GetLauncher());
+
+	if (pLauncher) {
+		int iImpulseBlast = 0;
+		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER(pLauncher, iImpulseBlast, impulse_blast);
+		if (iImpulseBlast) {
+			m_bWallShatter = false;
+			SetThink(&CTFGrenadePipebombProjectile::Detonate);
+			SetNextThink(gpGlobals->curtime);
+		}
+	}
+
 	if ( m_bWallShatter )
 	{
 		Fizzle();
@@ -869,15 +881,7 @@ void CTFGrenadePipebombProjectile::VPhysicsCollision( int index, gamevcollisione
 		return;
 	}
 
-	CTFGrenadeLauncher* pLauncher = dynamic_cast<CTFGrenadeLauncher*>(GetLauncher());
-	if (pLauncher) {
-		int iImpulseBlast = 0;
-		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER(pLauncher, iImpulseBlast, impulse_blast);
-		if (iImpulseBlast) {
-			SetThink(&CTFGrenadePipebombProjectile::Detonate);
-			SetNextThink(gpGlobals->curtime);
-		}
-	}
+	
 
 	if ( m_iType == TF_GL_MODE_REGULAR || m_iType == TF_GL_MODE_CANNONBALL )
 	{
