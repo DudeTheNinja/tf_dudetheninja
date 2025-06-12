@@ -686,7 +686,7 @@ void CHudUpgradePanel::PlayerInventoryChanged( C_TFPlayer *pPlayer )
 	// Go through every item and compare it to the item stored with the matching (slot) panel
 	for ( int nSlot = 0; nSlot < CLASS_LOADOUT_POSITION_COUNT; nSlot++ )
 	{
-		if ( nSlot == LOADOUT_POSITION_HEAD || nSlot == LOADOUT_POSITION_MISC )
+		if ( nSlot == LOADOUT_POSITION_HEAD || nSlot == LOADOUT_POSITION_MISC || nSlot == LOADOUT_POSITION_DTNHAT || nSlot == LOADOUT_POSITION_DTNSHIRT || nSlot == LOADOUT_POSITION_DTNPANTS || nSlot ==LOADOUT_POSITION_DTNACC)
 			continue;
 
 		CEconItemView *pCurrentItem = CTFPlayerSharedUtils::GetEconItemViewByLoadoutSlot( m_hPlayer, nSlot );

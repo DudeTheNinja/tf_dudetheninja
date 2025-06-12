@@ -1441,6 +1441,7 @@ void CTFPlayerModelPanel::RenderingMergedModel( IMatRenderContext *pRenderContex
 	} s_mergeModelSlot[] =
 	{
 		{ LOADOUT_POSITION_HEAD, SYSTEM_HEAD },
+		{ LOADOUT_POSITION_DTNHAT, SYSTEM_HEAD },
 		{ LOADOUT_POSITION_MISC, SYSTEM_MISC1 },
 		{ LOADOUT_POSITION_MISC2, SYSTEM_MISC2 },
 		{ LOADOUT_POSITION_PRIMARY, SYSTEM_WEAPON },
@@ -1488,6 +1489,7 @@ IMaterial* CTFPlayerModelPanel::GetOverrideMaterial( MDLHandle_t mdlHandle )
 {
 	loadout_positions_t s_iPosition[] = {
 		LOADOUT_POSITION_HEAD,
+		LOADOUT_POSITION_DTNHAT,
 		LOADOUT_POSITION_MISC,
 		LOADOUT_POSITION_MISC2,
 		LOADOUT_POSITION_PRIMARY,

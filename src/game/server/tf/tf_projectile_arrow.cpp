@@ -241,7 +241,7 @@ void CTFProjectile_Arrow::Spawn()
 	{
 		SetModel(g_pszArrowModels[MODEL_DTN_PHYSBULLET]);
 		m_iWeaponId = TF_WEAPON_SNIPERRIFLE_PROJECTILE;
-	}
+	} else
 	{
 		SetModel( g_pszArrowModels[MODEL_ARROW_REGULAR] );
 	}

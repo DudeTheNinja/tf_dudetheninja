@@ -83,12 +83,40 @@ void Misc1Offset_Callback( IConVar *pConVar, char const *pOldString, float flOld
 }
 ConVar tf_misc1_effect_offset( "tf_misc1_effect_offset", "0", FCVAR_HIDDEN, "Adjust the position of the unusual effect for your hat.", true, -8.0f, true, 8.0f, Misc1Offset_Callback );
 
-void Misc2Offset_Callback( IConVar *pConVar, char const *pOldString, float flOldValue )
+void Misc2Offset_Callback(IConVar* pConVar, char const* pOldString, float flOldValue)
 {
-	ConVarRef cVarRef( pConVar );
-	ParticleSlider_UpdateRequest( LOADOUT_POSITION_MISC2, cVarRef.GetFloat() );
+	ConVarRef cVarRef(pConVar);
+	ParticleSlider_UpdateRequest(LOADOUT_POSITION_MISC2, cVarRef.GetFloat());
 }
-ConVar tf_misc2_effect_offset( "tf_misc2_effect_offset", "0", FCVAR_HIDDEN, "Adjust the position of the unusual effect for your hat.", true, -8.0f, true, 8.0f, Misc2Offset_Callback );
+ConVar tf_misc2_effect_offset("tf_misc2_effect_offset", "0", FCVAR_HIDDEN, "Adjust the position of the unusual effect for your hat.", true, -8.0f, true, 8.0f, Misc2Offset_Callback);
+
+void DTNHatOffset_Callback(IConVar* pConVar, char const* pOldString, float flOldValue)
+{
+	ConVarRef cVarRef(pConVar);
+	ParticleSlider_UpdateRequest(LOADOUT_POSITION_DTNHAT, cVarRef.GetFloat());
+}
+ConVar tf_dtnhat_effect_offset("tf_dtnhat_effect_offset", "0", FCVAR_HIDDEN, "Adjust the position of the unusual effect for your hat.", true, -8.0f, true, 8.0f, DTNHatOffset_Callback);
+
+void DTNShirtOffset_Callback(IConVar* pConVar, char const* pOldString, float flOldValue)
+{
+	ConVarRef cVarRef(pConVar);
+	ParticleSlider_UpdateRequest(LOADOUT_POSITION_DTNSHIRT, cVarRef.GetFloat());
+}
+ConVar tf_dtnshirt_effect_offset("tf_dtnshirt_effect_offset", "0", FCVAR_HIDDEN, "Adjust the position of the unusual effect for your hat.", true, -8.0f, true, 8.0f, DTNShirtOffset_Callback);
+
+void DTNPantsOffset_Callback(IConVar* pConVar, char const* pOldString, float flOldValue)
+{
+	ConVarRef cVarRef(pConVar);
+	ParticleSlider_UpdateRequest(LOADOUT_POSITION_DTNPANTS, cVarRef.GetFloat());
+}
+ConVar tf_dtnpants_effect_offset("tf_dtnpants_effect_offset", "0", FCVAR_HIDDEN, "Adjust the position of the unusual effect for your hat.", true, -8.0f, true, 8.0f, DTNPantsOffset_Callback);
+
+void DTNAccOffset_Callback(IConVar* pConVar, char const* pOldString, float flOldValue)
+{
+	ConVarRef cVarRef(pConVar);
+	ParticleSlider_UpdateRequest(LOADOUT_POSITION_DTNACC, cVarRef.GetFloat());
+}
+ConVar tf_dtnacc_effect_offset("tf_dtnacc_effect_offset", "0", FCVAR_HIDDEN, "Adjust the position of the unusual effect for your hat.", true, -8.0f, true, 8.0f, DTNAccOffset_Callback);
 
 
 // Hacky solution to different classes wanting different slots visible in their loadouts, and in different positions
@@ -112,10 +140,10 @@ const LoadoutPanelPositioningInstance g_DefaultLoadoutPanelPositioning =
 		0,	// LOADOUT_POSITION_BUILDING,
 		0,	// LOADOUT_POSITION_PDA,
 		0,	// LOADOUT_POSITION_PDA2,
-		5,	// LOADOUT_POSITION_HEAD,
-		6,	// LOADOUT_POSITION_MISC,
-		8,	// LOADOUT_POSITION_ACTION,
-		7,	// LOADOUT_POSITION_MISC2,
+		0,//5,	// LOADOUT_POSITION_HEAD,
+		0,//6,	// LOADOUT_POSITION_MISC,
+		4,//8,	// LOADOUT_POSITION_ACTION,
+		0,//7,	// LOADOUT_POSITION_MISC2,
 		9,	// LOADOUT_POSITION_TAUNT,
 		10,	// LOADOUT_POSITION_TAUNT2,
 		11,	// LOADOUT_POSITION_TAUNT3,
@@ -125,6 +153,11 @@ const LoadoutPanelPositioningInstance g_DefaultLoadoutPanelPositioning =
 		15,	// LOADOUT_POSITION_TAUNT7,
 		16,	// LOADOUT_POSITION_TAUNT8,
 
+
+		5,// LOADOUT_POSITION_DTNHAT,
+		6,// LOADOUT_POSITION_DTNSHIRT,
+		7,// LOADOUT_POSITION_DTNPANTS,
+		8,// LOADOUT_POSITION_DTNACC,
 	}
 };
 
@@ -150,6 +183,12 @@ const LoadoutPanelPositioningInstance g_LoadoutPanelPositioning_Spy =
 		14,	// LOADOUT_POSITION_TAUNT6,
 		15,	// LOADOUT_POSITION_TAUNT7,
 		16,	// LOADOUT_POSITION_TAUNT8,
+
+
+		0,	// LOADOUT_POSITION_DTNHAT,
+		0,	// LOADOUT_POSITION_DTNSHIRT,
+		0,	// LOADOUT_POSITION_DTNPANTS,
+		0,	// LOADOUT_POSITION_DTNACC,
 	}
 };
 
@@ -175,6 +214,12 @@ const LoadoutPanelPositioningInstance g_LoadoutPanelPositioning_Engineer =
 		14,	// LOADOUT_POSITION_TAUNT6,
 		15,	// LOADOUT_POSITION_TAUNT7,
 		16,	// LOADOUT_POSITION_TAUNT8,
+
+
+		0, // LOADOUT_POSITION_DTNHAT,
+		0,// LOADOUT_POSITION_DTNSHIRT,
+		0,// LOADOUT_POSITION_DTNPANTS,
+		0,// LOADOUT_POSITION_DTNACC,
 	}
 };
 
@@ -289,7 +334,7 @@ void CLoadoutItemOptionsPanel::SetItemSlot( loadout_positions_t eItemSlot, int i
 
 	switch ( eItemSlot )
 	{
-	case LOADOUT_POSITION_HEAD :
+	case LOADOUT_POSITION_HEAD:
 		pszConVarName = "tf_hat_effect_offset";
 		break;
 	case LOADOUT_POSITION_MISC :
@@ -298,6 +343,19 @@ void CLoadoutItemOptionsPanel::SetItemSlot( loadout_positions_t eItemSlot, int i
 	case LOADOUT_POSITION_MISC2 :
 		pszConVarName = "tf_misc2_effect_offset";
 		break;
+	case LOADOUT_POSITION_DTNHAT:
+		pszConVarName = "tf_dtnhat_effect_offset";
+		break;
+	case LOADOUT_POSITION_DTNSHIRT:
+		pszConVarName = "tf_dtnshirt_effect_offset";
+		break;
+	case LOADOUT_POSITION_DTNPANTS:
+		pszConVarName = "tf_dtnpants_effect_offset";
+		break;
+	case LOADOUT_POSITION_DTNACC:
+		pszConVarName = "tf_dtnacc_effect_offset";
+		break;
+
 	default:
 		break;
 	}
