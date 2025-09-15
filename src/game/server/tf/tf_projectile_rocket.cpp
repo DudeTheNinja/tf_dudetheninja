@@ -52,6 +52,9 @@ void CTFProjectile_Rocket::Spawn()
 {
 	SetModel( ROCKET_MODEL );
 	BaseClass::Spawn();
+	CTFPlayer* pTFOwner = ToTFPlayer(GetOwnerPlayer());
+	m_nSkin = ( pTFOwner -> GetTeamNumber() == TF_TEAM_BLUE ) ? 1 : 0;
+
 }
 
 //-----------------------------------------------------------------------------
