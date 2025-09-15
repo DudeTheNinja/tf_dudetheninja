@@ -328,6 +328,7 @@ extern float AirBurstDamageForce( const Vector &size, float damage, float scale 
 //-----------------------------------------------------------------------------
 void CTFScatterGun::FireBullet( CTFPlayer *pPlayer )
 {
+	/*
 #ifndef CLIENT_DLL
 	if ( HasKnockback() )
 	{
@@ -372,7 +373,7 @@ void CTFScatterGun::FireBullet( CTFPlayer *pPlayer )
 			pOwner->RemoveFlag( FL_ONGROUND );
 		}
 	}
-#endif
+#endif*/
 
 	BaseClass::FireBullet( pPlayer );
 }
@@ -382,6 +383,7 @@ void CTFScatterGun::FireBullet( CTFPlayer *pPlayer )
 //-----------------------------------------------------------------------------
 void CTFScatterGun::ApplyPostHitEffects( const CTakeDamageInfo &inputInfo, CTFPlayer *pPlayer )
 {
+	/*
 #ifndef CLIENT_DLL
 	if ( !HasKnockback() )
 		return;
@@ -419,7 +421,8 @@ void CTFScatterGun::ApplyPostHitEffects( const CTakeDamageInfo &inputInfo, CTFPl
 	pTarget->m_Shared.StunPlayer( 0.3f, 1.f, TF_STUN_MOVEMENT | TF_STUN_MOVEMENT_FORWARD_ONLY, pAttacker );
 	pTarget->m_Shared.SetWeaponKnockbackID( pAttacker->GetUserID() );
 
-#endif
+#endif*/
+	BaseClass::ApplyPostHitEffects(inputInfo, pPlayer);
 }
 
 //-----------------------------------------------------------------------------

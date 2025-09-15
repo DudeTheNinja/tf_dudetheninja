@@ -53,7 +53,7 @@ END_PREDICTION_DATA()
 extern float AirBurstDamageForce(const Vector& size, float damage, float scale);
 
 #define JUMP_SPEED	268.3281572999747f
-#define RECOIL_KNOCKBACK_MIN_DMG		30.0f
+#define RECOIL_KNOCKBACK_MIN_DMG		1.0f
 #define RECOIL_KNOCKBACK_MIN_RANGE_SQ	160000.0f //400x400
 
 
@@ -409,8 +409,9 @@ void CTFWeaponBaseGun::ApplyKnockback(CTFPlayer* pPlayer) {
 			Vector vecAbsVelocity = pOwner->GetAbsVelocity();
 			Vector vecAbsVelocityAsPoint = vecAbsVelocity + pOwner->GetAbsOrigin();
 			Vector vecLocalVelocity = mtxPlayer.WorldToLocal(vecAbsVelocityAsPoint);
-
-			vecLocalVelocity.x = -300;
+			float flKnockbackMult = 1.0f;
+			CALL_ATTRIB_HOOK_FLOAT(flKnockbackMult, weapon_recoil_mult)
+			vecLocalVelocity.x = -300*flKnockbackMult;
 
 			vecAbsVelocityAsPoint = mtxPlayer.LocalToWorld(vecLocalVelocity);
 			vecAbsVelocity = vecAbsVelocityAsPoint - pOwner->GetAbsOrigin();
@@ -1208,7 +1209,6 @@ bool CTFWeaponBaseGun::HasKnockback(void)
 
 void CTFWeaponBaseGun::ApplyPostHitEffects(const CTakeDamageInfo& inputInfo, CTFPlayer* pPlayer)
 {
-#ifndef CLIENT_DLL
 	if (!HasKnockback())
 		return;
 
@@ -1227,12 +1227,15 @@ void CTFWeaponBaseGun::ApplyPostHitEffects(const CTakeDamageInfo& inputInfo, CTF
 		return;
 
 	// Knock the firer back!
+#ifndef CLIENT_DLL
+
 	int iSGKB2 = 0;
 	CALL_ATTRIB_HOOK_INT(iSGKB2, set_scattergun_has_knockback);
 	if (TFGameRules() && (TFGameRules()->State_Get() == GR_STATE_PREROUND))
 		return;
 	if (iSGKB2 && ((pAttacker->GetFlags() & FL_ONGROUND) || pAttacker->m_bScattergunJump))
 			return;
+#endif
 
 	float flDam = inputInfo.GetDamage();
 	Vector vecDir = pAttacker->WorldSpaceCenter() - pTarget->WorldSpaceCenter();
@@ -1240,16 +1243,24 @@ void CTFWeaponBaseGun::ApplyPostHitEffects(const CTakeDamageInfo& inputInfo, CTF
 		return;
 
 	VectorNormalize(vecDir);
+	float flFinalKBMult = 1.0f;
+	CALL_ATTRIB_HOOK_FLOAT(flFinalKBMult, weapon_knockback_others_mult);
+	if (flFinalKBMult == 0.0f)
+		CALL_ATTRIB_HOOK_FLOAT(flFinalKBMult, weapon_recoil_mult);
+	if (flFinalKBMult == 0.0f) // if STILL zero (i.e. using the old stat - fallback for compatibility)
+		CALL_ATTRIB_HOOK_FLOAT(flFinalKBMult, scattergun_knockback_mult);
+	if (flFinalKBMult == 0.0f) // if still zero after EVERYTHING (i.e. forgot to add the multiplier attribs but has the "can knockback" attrib)
+		flFinalKBMult = 1.0f;
 
-	float flKnockbackMult = 3.0f;
-	CALL_ATTRIB_HOOK_FLOAT_ON_OTHER(this, flKnockbackMult, weapon_recoil_mult);
-	if (flKnockbackMult == 0.0f)
-		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER(this, flKnockbackMult, scattergun_knockback_mult);
+#ifndef CLIENT_DLL
 
-	float flForce = AirBurstDamageForce(pTarget->WorldAlignSize(), flDam, flKnockbackMult);
-	Vector vecForce = vecDir * -flForce;
+	float flForce = AirBurstDamageForce(pTarget->WorldAlignSize(), flDam, flFinalKBMult);
+	Vector vecForce = vecDir * (-flForce);
 	vecForce.z += JUMP_SPEED;
-
+	Msg("\nForce: %.2f (", flForce);
+	Msg("%.2f", vecForce.x);
+	Msg(", %.2f", vecForce.y);
+	Msg(", %.2f)\n", vecForce.z);
 	pTarget->ApplyGenericPushbackImpulse(vecForce, pAttacker);
 
 	pTarget->m_Shared.StunPlayer(0.3f, 1.f, TF_STUN_MOVEMENT | TF_STUN_MOVEMENT_FORWARD_ONLY, pAttacker);
